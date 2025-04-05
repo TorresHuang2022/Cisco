@@ -1,3 +1,4 @@
+### Python通过ssh登陆思科交换机的脚本， 登录用户名 root , 密码：Cisco123, 登陆后自动进入到配置模式
 确保你已经安装了Paramiko库。如果没有安装，可以使用以下命令进行安装：
 pip install paramiko
 运行脚本时，输入目标交换机的IP地址。
