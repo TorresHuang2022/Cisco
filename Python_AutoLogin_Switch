@@ -1,42 +1,50 @@
+# Python通过ssh登陆思科交换机的脚本， 登录用户名 root , 密码：Cisco123, 登陆后自动进入到配置模式
 import paramiko
+import time
 
-# 定义交换机的IP地址、用户名和密码
-switch_ip = input("请输入交换机的IP地址：")
+# 交换机信息
+host = '192.168.1.1'  # 替换为你的交换机IP
 username = 'root'
 password = 'Cisco123'
 
-# 创建SSH客户端实例
-ssh_client = paramiko.SSHClient()
-# 设置自动接受未知主机密钥
-ssh_client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+def ssh_to_cisco_switch(host, username, password):
+    try:
+        # 创建 SSH 客户端
+        client = paramiko.SSHClient()
+        client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+        
+        print(f"连接到 {host} ...")
+        client.connect(hostname=host, username=username, password=password, look_for_keys=False, allow_agent=False)
 
-try:
-    # 连接交换机
-    ssh_client.connect(switch_ip, port=22, username=username, password=password)
-    print(f"成功连接到 {switch_ip}")
-    
-    # 打开交互式会话
-    shell = ssh_client.invoke_shell()
-    
-    # 发送进入配置模式的命令
-    shell.send('configure terminal\n')
-    print("已自动进入配置模式。")
-    
-    # 你可以在这里添加更多的配置命令，例如：
-    # shell.send('hostname NEW_SWITCH_NAME\n')  # 修改主机名
-    
-    # 提示用户输入回车继续
-    input("按回车键继续...")
-    
-except paramiko.AuthenticationException:
-    print("认证失败，请检查用户名和密码是否正确。")
-except paramiko.SSHException as e:
-    print(f"SSH连接异常：{e}")
-except Exception as e:
-    print(f"发生错误：{e}")
+        # 打开交互式 shell
+        shell = client.invoke_shell()
+        time.sleep(1)
 
-# 关闭SSH连接
-ssh_client.close()
-print("已断开与交换机的连接。")
+        # 清空欢迎信息
+        shell.recv(1000)
 
-print("\n配置完成！")
+        # 进入特权模式（如果需要）
+        shell.send('enable\n')
+        time.sleep(1)
+        shell.send(password + '\n')  # 如果 enable 密码与登录密码相同
+        time.sleep(1)
+
+        # 进入全局配置模式
+        shell.send('configure terminal\n')
+        time.sleep(1)
+
+        # 获取当前输出
+        output = shell.recv(5000).decode('utf-8')
+        print(output)
+
+        # 关闭连接
+        shell.send('exit\n')
+        time.sleep(1)
+        shell.send('exit\n')
+        client.close()
+
+    except Exception as e:
+        print(f"发生错误: {e}")
+
+# 运行脚本
+ssh_to_cisco_switch(host, username, password)
