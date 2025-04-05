@@ -1,0 +1,42 @@
+import paramiko
+
+# 定义交换机的IP地址、用户名和密码
+switch_ip = input("请输入交换机的IP地址：")
+username = 'root'
+password = 'Cisco123'
+
+# 创建SSH客户端实例
+ssh_client = paramiko.SSHClient()
+# 设置自动接受未知主机密钥
+ssh_client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+
+try:
+    # 连接交换机
+    ssh_client.connect(switch_ip, port=22, username=username, password=password)
+    print(f"成功连接到 {switch_ip}")
+    
+    # 打开交互式会话
+    shell = ssh_client.invoke_shell()
+    
+    # 发送进入配置模式的命令
+    shell.send('configure terminal\n')
+    print("已自动进入配置模式。")
+    
+    # 你可以在这里添加更多的配置命令，例如：
+    # shell.send('hostname NEW_SWITCH_NAME\n')  # 修改主机名
+    
+    # 提示用户输入回车继续
+    input("按回车键继续...")
+    
+except paramiko.AuthenticationException:
+    print("认证失败，请检查用户名和密码是否正确。")
+except paramiko.SSHException as e:
+    print(f"SSH连接异常：{e}")
+except Exception as e:
+    print(f"发生错误：{e}")
+
+# 关闭SSH连接
+ssh_client.close()
+print("已断开与交换机的连接。")
+
+print("\n配置完成！")
